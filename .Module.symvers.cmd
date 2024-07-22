@@ -1,1 +1,0 @@
-savedcmd_/usr/src/linux-6.9.5/custom/Module.symvers :=  scripts/mod/modpost -M -m -a      -o /usr/src/linux-6.9.5/custom/Module.symvers -T /usr/src/linux-6.9.5/custom/modules.order -i Module.symvers -e 
