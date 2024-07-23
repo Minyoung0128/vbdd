@@ -145,8 +145,8 @@ unsigned int csl_write(void* buf, uint num_sec)
 	if (ppn >= DEV_SECTOR_NUM || ppn >= MAX_INT){
 		// garbage collection 수행
 		uint ppn_new = csl_gc();
-		if(ppn_new >= MAX_INT){
-			// pr_warn("CSL : There is no capacity in device");
+		if(ppn_new >= MAX_INT || ppn_new * SECTOR_SIZE + nbytes > DEVICE_TOTAL_SIZE){
+			pr_warn("CSL : There is no capacity in device");
 			return FAIL_EXIT;
 		}
 		memcpy(dev->data+(ppn_new*SECTOR_SIZE), buf, nbytes);

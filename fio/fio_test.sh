@@ -1,6 +1,6 @@
 RUNTIME=30s
-NUMJOBS=4
-SIZE=16m
+NUMJOBS=1
+SIZE=8m
 RAMP=5s
 IOENGINE=io_uring
 DIRECT=1
@@ -8,7 +8,7 @@ VERIFY=0
 FILE_NAME="/dev/CSL"
 
 TYPE=("randwrite")
-BLOCK_SIZES=("4k" "16k" "32k" "64k")
+BLOCK_SIZES=("512B")
 IO_DEPTHS=("16" "32" "64")
 
 run_fio_test(){

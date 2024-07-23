@@ -1,1 +1,1 @@
-savedcmd_/usr/src/linux-6.9.5/custom/csl.ko := ld -r -m elf_x86_64 -z noexecstack --build-id=sha1  -T scripts/module.lds -o /usr/src/linux-6.9.5/custom/csl.ko /usr/src/linux-6.9.5/custom/csl.o /usr/src/linux-6.9.5/custom/csl.mod.o
+savedcmd_/usr/src/linux-6.9.5/vbdd/csl.ko := ld -r -m elf_x86_64 -z noexecstack --build-id=sha1  -T scripts/module.lds -o /usr/src/linux-6.9.5/vbdd/csl.ko /usr/src/linux-6.9.5/vbdd/csl.o /usr/src/linux-6.9.5/vbdd/csl.mod.o
