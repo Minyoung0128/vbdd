@@ -4,46 +4,53 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
 
-#define BUF_LEN		512 // 8 sector
-#define DEV_NAME	"/dev/CSL"
-#define DEV_SIZE 16*1024*1024 // 2048 sector니까 총 256번의 write_pattern을 수행 가능 
-#define SECTOR_SIZE 512
-#define START_SECTOR 10
-#define END_SECTOR 100
+#define BUF_LEN      4096 // 8 sector
+#define DEV_NAME     "/dev/CSL"
+#define DEV_SIZE     (16*1024*1024) // 16 MB
+#define SECTOR_SIZE  512
+#define MAX_SECTORS  (DEV_SIZE / SECTOR_SIZE)
+#define START_SECTOR 1
+#define END_SECTOR   DEV_SIZE/SECTOR_SIZE -1
 
-int main()
-{
+int main() {
     static char buf[BUF_LEN];
     int fd;
-	off_t off = 512;
-    int write_count = 0;
+    off_t off;
 
     printf("Start to test\n");
 
     if ((fd = open(DEV_NAME, O_RDWR)) < 0) {
-		  perror("open error");
+        perror("open error");
+        return 1;
     }
 
-    for (int i = START_SECTOR; i!=END_SECTOR; i++){
-        off = (off_t) i*SECTOR_SIZE;
+    srand(time(NULL));
 
-        if(lseek(fd, off, SEEK_SET)<0){
-            perror("lseeck error");
-            return 0;
+    for (int i = 0; i < 10000; i++) {
+
+        int rand_sector = START_SECTOR + rand() % (END_SECTOR - START_SECTOR);
+        int rand_size = (rand() % (BUF_LEN / SECTOR_SIZE) + 1) * SECTOR_SIZE;
+
+        off = (off_t) rand_sector * SECTOR_SIZE;
+
+        if (lseek(fd, off, SEEK_SET) < 0) {
+            perror("lseek error");
+            close(fd);
+            return 1;
         }
 
-        snprintf(buf, 100, "WRITE TEST with SECTOR NUM %d\n", i);
+        snprintf(buf, rand_size, "write to %d [size : %d]", rand_sector, rand_size);
+        // printf("write to %d : %s [size : %d]\n", rand_sector, buf, rand_size);
 
-        if(write(fd, buf, sizeof(buf))<0){
+        if (write(fd, buf, rand_size) < 0) {
             perror("Write Error");
-            return 0;
+            close(fd);
+            return 1;
         }
-
-   }
+    }
 
     close(fd);
-    
-    return 1;
-
-} 
+    return 0;
+}

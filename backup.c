@@ -129,6 +129,7 @@ void csl_restore(struct csl_dev *dev)
 	
 	vfree(total_data);
 	display_index();
+	pr_info("There are %d XArray Entry, %d GC Entry > total data size is [%d] bytes", xa_entry_num, gc_entry_num, total_data_size);
 	pr_info("CSL : RESTORE COMPLETE");
 	return;
 

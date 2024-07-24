@@ -46,32 +46,19 @@ MODULE_LICENSE("GPL");
 
 #define BACKUP_FAIL_MSG "CSL : FAIL TO BACK UP CSL"
 
-/**
- * ETC VALUE FOR CONVENIENCE
- */
-
-#define MAX_INT 0xFFFF
-#define MAX_LONG 0xFFFFFFFF
-
 struct csl_dev{
 	struct request_queue *queue;
 	struct gendisk *gdisk;
 
     struct blk_mq_tag_set tag_set; // request queue의 tag set
-
-	// atomic operation을 위한 lock
-	spinlock_t csl_lock;
-
-	// file write 시작 지점 -> sector 기준 
-	// unsigned int offset;
-
-	// Free Sector 관리를 위한 bitmap
+	
+	// Bitmap for manage free sectors
 	unsigned long *free_map; 
 	
-	// garbage collection을 위한 list 선언 
+	// Doubly linked list for garbage collection 
 	struct list_head list;
 
-	// XArray
+	// XArray for logical block to physical page
 	struct xarray l2p_map;
 
 	// Actual Data Array
@@ -79,9 +66,8 @@ struct csl_dev{
 };
 
 struct l2b_item{
-	// 기준은 SECTOR
-	unsigned long lba; // 이게 index가 되고 
-	unsigned int ppn; // 이게 data가 되어서 저장
+	unsigned long lba; 
+	unsigned int ppn;
 };
 
 struct list_item{
@@ -94,6 +80,7 @@ struct list_item{
  * The function of csl.c
  * Block operation of device
  */
+unsigned long find_free_sector(unsigned int size);
 void display_index(void);
 uint csl_gc(void);
 void csl_invalidate(unsigned int ppn);

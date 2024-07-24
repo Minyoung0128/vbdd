@@ -2,5 +2,5 @@
 *.symvers
 *.o
 *.ko
-*.mod
+*.mod*
 *.csv
