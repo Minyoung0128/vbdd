@@ -25,7 +25,7 @@ run_fio_test(){
 for bs in "${BLOCK_SIZES[@]}"; do
 	for rwtype in "${TYPE[@]}"; do
 		for io_depth in "${IO_DEPTHS[@]}"; do
-	       		output_file="./result/fio4_${bs}_${rwtype}_${io_depth}.csv"
+	       		output_file="./result/fio_${bs}_${rwtype}_${io_depth}.csv"
 			echo "Running fio test with blk size $bs and type $rwtype and depth $io_depth"
  			run_fio_test $bs $output_file $rwtype $io_depth
 		done
