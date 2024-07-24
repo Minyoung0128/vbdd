@@ -1,0 +1,6 @@
+*.cmd
+*.symvers
+*.o
+*.ko
+*.mod
+*.csv
