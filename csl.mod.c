@@ -49,6 +49,7 @@ __used __section("__versions") = {
 	{ 0xd7bdc72, "put_disk" },
 	{ 0xf0fdf6cb, "__stack_chk_fail" },
 	{ 0x20dbf27, "bitmap_alloc" },
+	{ 0xdc476d9, "blk_get_queue" },
 	{ 0x7cd8d75e, "page_offset_base" },
 	{ 0x615911d7, "__bitmap_set" },
 	{ 0xb5a459dc, "unregister_blkdev" },
@@ -57,6 +58,7 @@ __used __section("__versions") = {
 	{ 0x94535adb, "blk_mq_free_tag_set" },
 	{ 0x1820815b, "del_gendisk" },
 	{ 0x64127b67, "bitmap_find_next_zero_area_off" },
+	{ 0x6f9e0477, "blk_put_queue" },
 	{ 0x7a3e22fc, "kernel_read" },
 	{ 0x5b8239ca, "__x86_return_thunk" },
 	{ 0x97651e6c, "vmemmap_base" },
@@ -79,4 +81,4 @@ __used __section("__versions") = {
 MODULE_INFO(depends, "");
 
 
-MODULE_INFO(srcversion, "9E4AE88716623AFF87AD135");
+MODULE_INFO(srcversion, "67CA58097D18A5A82A77B7B");

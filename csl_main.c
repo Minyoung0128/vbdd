@@ -145,14 +145,10 @@ unsigned int csl_write(void* buf, uint num_sec)
 	if (ppn >= DEV_SECTOR_NUM || ppn >= MAX_INT){
 		// garbage collection 수행
 		uint ppn_new = csl_gc();
-		if(ppn_new >= MAX_INT || ppn_new * SECTOR_SIZE + nbytes > DEVICE_TOTAL_SIZE){
-			pr_warn("CSL : There is no capacity in device");
-			return FAIL_EXIT;
-		}
+		
 		memcpy(dev->data+(ppn_new*SECTOR_SIZE), buf, nbytes);
 		return ppn_new; 
 	}
-
 	memcpy(dev->data+(ppn*SECTOR_SIZE), buf, nbytes);
 
 	return ppn;	
@@ -160,12 +156,17 @@ unsigned int csl_write(void* buf, uint num_sec)
 
 static int csl_open(struct gendisk *gdisk, fmode_t mode)
 {
+	if(!blk_get_queue(gdisk->queue)){
+		pr_warn("fail to get queue");
+		return -1;
+	}
 	printk("CSL Device Drive open !\n");
 	return 0;
 }
 
 static void csl_release(struct gendisk *gd)
 {
+	blk_put_queue(gd->queue);
 	printk("CSL Device Drive released!\n");
 }
 
@@ -258,9 +259,6 @@ void csl_get_request(struct request *rq)
 	void* buffer;
 
 	rq_for_each_segment(bvec, rq, iter){
-		
-		// request의 bio_vec을 가져와 파싱해줌
-		// rq OR rq_cur?
 		unsigned int num_sector = blk_rq_cur_sectors(rq); 
 
 		buffer = page_address(bvec.bv_page)+bvec.bv_offset;
@@ -317,7 +315,7 @@ static struct csl_dev *csl_alloc(void)
 
 	mydev->tag_set.ops = &csl_mq_ops;
 	mydev->tag_set.nr_hw_queues = 1;
-	mydev->tag_set.queue_depth = 32;
+	mydev->tag_set.queue_depth = 128;
 	mydev->tag_set.numa_node = NUMA_NO_NODE;
 	mydev->tag_set.cmd_size = 0;
 	mydev->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
@@ -398,7 +396,7 @@ static int __init csl_init(void)
 
 	csl_restore(dev);
 	
-	printk(KERN_INFO "DEVICE : CSL is successfully initialized with major number %d, SECTOR NUM : %d, free_sector = %d\n",CSL_MAJOR,DEV_SECTOR_NUM, FREE_MAP_SIZE);
+	printk(KERN_INFO "DEVICE : CSL is successfully initialized with major number %d, SECTOR NUM : %d, free_sector = %ld\n",CSL_MAJOR,DEV_SECTOR_NUM, FREE_MAP_SIZE);
 	return 0;
 }
 
