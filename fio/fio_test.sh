@@ -7,9 +7,9 @@ DIRECT=1
 VERIFY=0
 FILE_NAME="/dev/CSL"
 
-TYPE=("read" "write" "randread" "randwrite")
+TYPE=("write" "read" "randread" "randwrite")
 BLOCK_SIZES=("512B")
-NUM_JOBS=("1" "8" "16")
+NUM_JOBS=("4")
 
 run_fio_test(){
 	local bs=$1
