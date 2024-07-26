@@ -7,12 +7,14 @@
 #include <linux/blk_types.h>
 #include <linux/err.h>
 #include <linux/bitmap.h>
+#include <linux/spinlock.h>
 
 #include "csl.h"
 
 static int CSL_MAJOR = 0; // save the major number of the device
 
 struct csl_dev *dev;
+DEFINE_SPINLOCK(csl_lock);
 
 struct queue_limits queue_limit = {
 		.logical_block_size	= 512,
@@ -27,7 +29,7 @@ struct queue_limits queue_limit = {
 unsigned long find_free_sector(unsigned int size)
 {
 	/* check there is free sector */
-	if(bitmap_full(dev->free_map, DEV_SECTOR_NUM)) return FAIL_EXIT;
+	if(bitmap_full(dev->free_map, DEV_SECTOR_NUM)) return OUT_OF_SECTOR;
 
 	unsigned long bit;
 
@@ -90,7 +92,7 @@ uint csl_gc(void)
 		return ppn_new;
 	}
 
-	return FAIL_EXIT;
+	return OUT_OF_SECTOR;
 }
 
 /** 
@@ -150,13 +152,21 @@ unsigned int csl_write(void* buf, uint num_sec)
 	/* There is no free sector > Do garbage collection */
 	if (ppn >= DEV_SECTOR_NUM ){
 		uint ppn_new = csl_gc();
+		if(ppn_new >= DEV_SECTOR_NUM || ppn_new*SECTOR_SIZE + nbytes > DEVICE_TOTAL_SIZE){
+			pr_warn("THERE IS NO CAPACITY IN CSL!");
+			return OUT_OF_SECTOR;
+		}
 		
-		memcpy(dev->data+(ppn_new*SECTOR_SIZE), buf, nbytes);
+		memcpy((void*)dev->data+(ppn_new*SECTOR_SIZE), buf, nbytes);
 		return ppn_new; 
 	}
 
 	/* There is Free sector */
-	memcpy(dev->data+(ppn*SECTOR_SIZE), buf, nbytes);
+	if(ppn >= DEV_SECTOR_NUM || ppn*SECTOR_SIZE + nbytes > DEVICE_TOTAL_SIZE){
+			pr_warn("THERE IS NO CAPACITY IN CSL!");
+			return OUT_OF_SECTOR;
+	}
+	memcpy((void*)dev->data+(ppn*SECTOR_SIZE), buf, nbytes);
 
 	return ppn;	
 }
@@ -193,7 +203,7 @@ static int csl_ioctl(struct block_device *bdev, blk_mode_t mode, unsigned cmd, u
  * @isWrite : the request is read or write
  * 
  */
-void csl_transfer(struct csl_dev *dev, unsigned int start_sec, unsigned int num_sec, void* buffer, int isWrite){
+void csl_transfer(unsigned int start_sec, unsigned int num_sec, void* buffer, int isWrite){
 
 	struct l2b_item* l2b_item;
 	void* ret;
@@ -233,7 +243,7 @@ void csl_transfer(struct csl_dev *dev, unsigned int start_sec, unsigned int num_
 			l2b_item->ppn = final_ppn;
 			csl_invalidate(ppn_old);
 		}
-		pr_info("CSL : write start[%d] | num_sec[%d] | ppn[%d]", start_sec, num_sec, final_ppn);
+		//pr_info("CSL : write start[%d] | num_sec[%d] | ppn[%d]", start_sec, num_sec, final_ppn);
 	}
 
 	else {
@@ -242,6 +252,7 @@ void csl_transfer(struct csl_dev *dev, unsigned int start_sec, unsigned int num_
 		l2b_item = (struct l2b_item*) ret;
 		csl_read(l2b_item->ppn, buffer, num_sec);
 	}
+	
 }
 
 /**
@@ -267,7 +278,7 @@ void csl_get_request(struct request *rq)
 
 		buffer = page_address(bvec.bv_page)+bvec.bv_offset;
 
-		csl_transfer(dev, start_sector, num_sector, buffer, isWrite); // transfer로 들어가면 read or write를 실행
+		csl_transfer(start_sector, num_sector, buffer, isWrite); // transfer로 들어가면 read or write를 실행
 
 		start_sector += num_sector; 
 	}
@@ -280,8 +291,10 @@ blk_status_t csl_enqueue(struct blk_mq_hw_ctx *ctx, const struct blk_mq_queue_da
 	struct request *rq = data->rq;
 	
 	blk_mq_start_request(rq);
-
+	
+	spin_lock(&csl_lock);
 	csl_get_request(rq);
+	spin_unlock(&csl_lock);
 
 	blk_mq_end_request(rq, BLK_STS_OK);
 
@@ -359,6 +372,9 @@ static struct csl_dev *csl_alloc(void)
 	/* Allocate bitmap and Actual data space */
 	mydev->data = vmalloc(DEVICE_TOTAL_SIZE);
 	mydev->free_map = bitmap_alloc(DEV_SECTOR_NUM, GFP_KERNEL);
+
+	/* init lock*/
+	spin_lock_init(&mydev->csl_lock);
 
 	return mydev;
 }

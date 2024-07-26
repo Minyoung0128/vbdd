@@ -53,8 +53,6 @@ void csl_restore(struct csl_dev *dev)
 	unsigned int *metadata_ptr;
 	u8 *data_ptr;
 
-	unsigned int offset;
-
 	struct l2b_item* l2b_item;
 	struct list_item* item;
 

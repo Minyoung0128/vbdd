@@ -12,7 +12,7 @@
 #define SECTOR_SIZE  512
 #define MAX_SECTORS  (DEV_SIZE / SECTOR_SIZE)
 #define START_SECTOR 1
-#define END_SECTOR   DEV_SIZE/SECTOR_SIZE -1
+#define END_SECTOR  1000
 
 int main() {
     static char buf[BUF_LEN];

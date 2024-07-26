@@ -26,6 +26,7 @@ MODULE_LICENSE("GPL");
  */
 #define SUCCESS_EXIT 0
 #define FAIL_EXIT -1
+#define OUT_OF_SECTOR DEV_SECTOR_NUM + 10
 
 /*
 * DEVICE BACKUP CONSTANT
@@ -49,9 +50,11 @@ MODULE_LICENSE("GPL");
 struct csl_dev{
 	struct request_queue *queue;
 	struct gendisk *gdisk;
-
-    struct blk_mq_tag_set tag_set; // request queue의 tag set
 	
+	struct blk_mq_tag_set tag_set; // request queue의 tag set
+
+	spinlock_t csl_lock;
+
 	// Bitmap for manage free sectors
 	unsigned long *free_map; 
 	
@@ -86,7 +89,7 @@ uint csl_gc(void);
 void csl_invalidate(unsigned int ppn);
 void csl_read(uint ppn, void* buf, uint num_sec);
 unsigned int csl_write(void* buf, uint num_sec);
-void csl_transfer(struct csl_dev *dev, unsigned int start_sec, unsigned int num_sec, void* buffer, int isWrite);
+void csl_transfer(unsigned int start_sec, unsigned int num_sec, void* buffer, int isWrite);
 void csl_get_request(struct request *rq);
 blk_status_t csl_enqueue(struct blk_mq_hw_ctx *ctx, const struct blk_mq_queue_data *data);
 void bits_print(unsigned long *v, u32 nbits);
